@@ -15,7 +15,7 @@ import javax.inject.Singleton
 object DatabaseModule {
     @Provides @Singleton
     fun provideDatabase(@ApplicationContext ctx: Context): AppDatabase =
-        Room.databaseBuilder(ctx, AppDatabase::class.java, "snapswipe.db")
+        Room.databaseBuilder(ctx, AppDatabase::class.java, "swipeclean.db")
             .fallbackToDestructiveMigration() // Dev only — replace with migrations in prod
             .build()
     @Provides @Singleton
