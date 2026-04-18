@@ -12,7 +12,6 @@ import com.app.swipeclean.ui.stats.StatsScreen
 import com.app.swipeclean.ui.swipe.SwipeScreen
 import com.app.swipeclean.ui.trash.TrashScreen
 
-
 @Composable
 fun NavGraph(startDestination: String = Screen.Permission.route) {
     val navController = rememberNavController()
