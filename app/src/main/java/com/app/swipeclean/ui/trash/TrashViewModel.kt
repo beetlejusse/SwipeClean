@@ -1,0 +1,46 @@
+package com.app.swipeclean.ui.trash
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.app.swipeclean.data.model.TrashEntry
+import com.app.swipeclean.data.repository.TrashRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.WhileSubscribed
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+
+
+data class TrashUiState(
+    val entries : List<TrashEntry> = emptyList(),
+    val totalSizeMb: Float = 0f
+)
+
+@HiltViewModel
+class TrashViewModel @Inject constructor(
+    private val trashRepo: TrashRepository
+): ViewModel() {
+    val state: StateFlow<TrashUiState> = combine(
+        trashRepo.observeAllTrash(),
+        trashRepo.observeTrashSizeBytes()
+    ) { entries, bytes ->
+        TrashUiState(entries = entries, totalSizeMb = (bytes ?: 0L) / 1_048_576f)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), TrashUiState())
+
+    //Restore all -> empties the trash table w/o touching mediastore
+    fun restoreAll() = viewModelScope.launch {
+        state.value.entries.forEach {
+            trashRepo.restoreFromTrash(it)
+        }
+    }
+
+    //hard delete all entries immediately(not even waiting for 30 days)
+    fun deleteAll() = viewModelScope.launch {
+        trashRepo.hardDelete(
+            state.value.entries
+        )
+    }
+}
