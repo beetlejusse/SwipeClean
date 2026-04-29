@@ -8,12 +8,12 @@ plugins {
 
 android {
     namespace = "com.app.swipeclean"
-    compileSdk = 35 // SDK 36 is in Preview; 35 is currently the stable target
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.app.swipeclean"
-        minSdk = 24
-        targetSdk = 35
+        minSdk = 26
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 
@@ -58,6 +58,7 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.ui.tooling.preview)
+    implementation(libs.androidbrowserhelper)
     debugImplementation(libs.androidx.ui.tooling)
 
     // ■■ Navigation & Lifecycle ■■
@@ -93,4 +94,6 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+
+    implementation(libs.accompanist.permissions)
 }
