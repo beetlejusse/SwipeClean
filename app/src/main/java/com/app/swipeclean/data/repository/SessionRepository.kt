@@ -6,6 +6,7 @@ import com.app.swipeclean.data.local.DailyFreed
 import com.app.swipeclean.data.local.SessionDao
 import com.app.swipeclean.data.model.SessionRecord
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
@@ -23,7 +24,6 @@ class SessionRepository @Inject constructor(
     fun observeTotalFreed(): Flow<Long?> = sessionDao.observeTotalBytesFreed()
     fun observeTotalDeleted():Flow<Int?> = sessionDao.observeTotalPhotosDeleted()
 
-    // Calculate streak: how many consecutive days (ending today) had a session
     suspend fun calculateStreak() : Int {
         val activeDates = sessionDao.getActiveDates()
         if(activeDates.isEmpty()) return 0
@@ -40,5 +40,27 @@ class SessionRepository @Inject constructor(
         }
         return streak
     }
+    
+    fun observeStreak(): Flow<Int> = observeAllSessions().map { sessions ->
+        if (sessions.isEmpty()) return@map 0
+        
+        val activeDates = sessions.map { it.date }.distinct().sorted().reversed()
+        if (activeDates.isEmpty()) return@map 0
+        
+        var streak = 0
+        var expectedDate = LocalDate.now()
+        
+        for (dateStr in activeDates) {
+            val date = LocalDate.parse(dateStr, dateFmt)
+            if (date == expectedDate) {
+                streak++
+                expectedDate = expectedDate.minusDays(1)
+            } else {
+                break
+            }
+        }
+        streak
+    }
+    
     fun todayDateString(): String = LocalDate.now().format(dateFmt)
 }
