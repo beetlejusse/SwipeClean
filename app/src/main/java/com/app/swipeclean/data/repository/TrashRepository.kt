@@ -1,5 +1,6 @@
 package com.app.swipeclean.data.repository
 
+import android.app.PendingIntent
 import android.content.Context
 import android.net.Uri
 import android.os.Build
@@ -38,29 +39,21 @@ class TrashRepository @Inject constructor(
 
     // Hard delete: actually remove files from MediaStore + Room
     // Called by WorkManager purger and 'Delete Now' button
-    suspend fun hardDelete(entries: List<TrashEntry>) = withContext(Dispatchers.IO) {
-        val uris = entries.map{ it.uri.toUri() }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            // API 30+: Use createDeleteRequest — system shows confirmation dialog
-            // The Activity must handle the resulting IntentSender
-
-            val pendingIntent = MediaStore.createDeleteRequest(
-                context.contentResolver, uris
-            )
-
-            // Return the PendingIntent to the UI layer to launch
-            // (see TrashViewModel for how this is handled)
-
+    suspend fun hardDelete(entries: List<TrashEntry>): PendingIntent? {
+        val uris = entries.map { it.uri.toUri() }
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            MediaStore.createDeleteRequest(context.contentResolver, uris)
         } else {
-            // API 26-29: Direct ContentResolver deletion
+            // Direct delete on older Android
             uris.forEach { uri ->
                 try { context.contentResolver.delete(uri, null, null) }
-                catch (e: Exception) { /* log and skip */ }
+                catch (e: Exception) { /* log */ }
             }
+            trashDao.deleteByUris(entries.map { it.uri })
+            null
         }
-        // Remove from Room regardless of API level
-        trashDao.deleteByUris(entries.map { it.uri })
     }
+
     // Called by WorkManager: find entries past 30-day TTL and purge them
     suspend fun purgeExpired() {
         val expired = trashDao.getExpiredEntries(System.currentTimeMillis())

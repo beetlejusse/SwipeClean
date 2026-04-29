@@ -1,5 +1,9 @@
 package com.app.swipeclean.ui.trash
 
+import android.app.Activity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -18,6 +22,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,7 +45,7 @@ fun TrashScreen(
 
     val state by vm.state.collectAsStateWithLifecycle()
     Column (
-        modifier = Modifier.fillMaxSize().background(BrutalCream).padding(top = 52.dp, start = 16.dp, bottom = 16.dp),
+        modifier = Modifier.background(BrutalCream).padding(top = 52.dp, start = 16.dp, bottom = 40.dp, end = 16.dp).fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
 
@@ -94,6 +99,24 @@ fun TrashScreen(
                 }
             }
         }
+
+        val deleteIntent by vm.deletePendingIntent.collectAsStateWithLifecycle()
+
+        val deleteLauncher = rememberLauncherForActivityResult(
+            ActivityResultContracts.StartIntentSenderForResult()
+        ) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                // User confirmed - now remove from Room
+                vm.onDeleteConfirmed()
+            }
+        }
+
+        LaunchedEffect(deleteIntent) {
+            deleteIntent?.let {
+                deleteLauncher.launch(IntentSenderRequest.Builder(it).build())
+            }
+        }
+
 
         // Action buttons
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {

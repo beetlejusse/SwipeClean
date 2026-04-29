@@ -1,10 +1,13 @@
 package com.app.swipeclean.ui.trash
 
+import android.app.PendingIntent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.app.swipeclean.data.local.TrashDao
 import com.app.swipeclean.data.model.TrashEntry
 import com.app.swipeclean.data.repository.TrashRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.WhileSubscribed
@@ -21,7 +24,8 @@ data class TrashUiState(
 
 @HiltViewModel
 class TrashViewModel @Inject constructor(
-    private val trashRepo: TrashRepository
+    private val trashRepo: TrashRepository,
+    private val trashDao: TrashDao
 ): ViewModel() {
     val state: StateFlow<TrashUiState> = combine(
         trashRepo.observeAllTrash(),
@@ -38,9 +42,19 @@ class TrashViewModel @Inject constructor(
     }
 
     //hard delete all entries immediately(not even waiting for 30 days)
+
+    private val _deletePendingIntent = MutableStateFlow<PendingIntent?>(null)
+    val deletePendingIntent: StateFlow<PendingIntent?> = _deletePendingIntent
+
     fun deleteAll() = viewModelScope.launch {
-        trashRepo.hardDelete(
+        val intent = trashRepo.hardDelete(
             state.value.entries
         )
+        _deletePendingIntent.value = intent
     }
+
+    fun onDeleteConfirmed() = viewModelScope.launch {
+        trashDao.deleteByUris(state.value.entries.map { it.uri })
+    }
+
 }
