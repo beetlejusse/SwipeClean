@@ -3,6 +3,9 @@ package com.app.swipeclean.ui.swipe
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
@@ -15,7 +18,7 @@ import com.app.swipeclean.ui.theme.*
 import com.app.swipeclean.ui.components.*
 
 @Composable
-fun swipeScreen (
+fun SwipeScreen (
     sessionGoal: Int = 0,
     onBack: () -> Unit,
     vm: SwipeViewModel = hiltViewModel()
@@ -42,8 +45,10 @@ fun swipeScreen (
 
         // Progress bar
         LinearProgressIndicator(
-            progress = { if (state.photos.isEmpty()) 0f
-            else state.currentIndex / state.photos.size.toFloat() },
+            progress = {
+                if (state.photos.isEmpty()) 0f
+                else state.currentIndex / state.photos.size.toFloat()
+            },
             modifier = Modifier.fillMaxWidth().height(8.dp).border(2.dp, BrutalBlack),
             color = BrutalYellow,
             trackColor = Color.White
@@ -54,7 +59,7 @@ fun swipeScreen (
         if (currentPhoto != null) {
             PhotoSwipeCard(
                 photo = currentPhoto,
-                modifier = Modifier.weight(1f).fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().aspectRatio(1f),
                 onSwipeLeft = { vm.onSwipeLeft() },
                 onSwipeRight = { vm.onSwipeRight() },
             )
@@ -77,5 +82,42 @@ fun swipeScreen (
                 modifier = Modifier.weight(1f)
             )
         }
+    }
+}
+
+@Composable
+private fun SwipeTopBar(
+    currentIndex: Int,
+    total: Int,
+    canUndo: Boolean,
+    onBack: () -> Unit,
+    onUndo: () -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        BrutalButton(
+            text = "← BACK",
+            onClick = onBack,
+            background = Color.White,
+            textColor = BrutalBlack,
+            modifier = Modifier.width(110.dp)
+        )
+
+        Text(
+            text = "${(currentIndex + 1).coerceAtMost(total.coerceAtLeast(1))} / ${total.coerceAtLeast(1)}",
+            style = MaterialTheme.typography.titleMedium,
+            color = BrutalBlack
+        )
+
+        BrutalButton(
+            text = "↶ UNDO",
+            onClick = onUndo,
+            background = if (canUndo) BrutalYellow else Color.LightGray,
+            textColor = BrutalBlack,
+            modifier = Modifier.width(110.dp)
+        )
     }
 }

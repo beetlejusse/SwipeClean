@@ -1,7 +1,6 @@
 package com.app.swipeclean.ui.swipe
 
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -12,12 +11,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
@@ -27,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.app.swipeclean.data.model.Photo
 import com.app.swipeclean.ui.theme.*
+import com.app.swipeclean.util.formatFileSize
 import kotlin.math.roundToInt
 
 private const val SWIPE_THRESHOLD = 200f // px — how far to drag before triggering
@@ -53,13 +55,17 @@ fun PhotoSwipeCard (
     val showDelete = offsetX < -60f
     val showKeep = offsetX > 60f
     Box(
-        modifier = modifier.offset{IntOffset(offsetX.roundToInt(), 0)}.rotate(rotation)
+        modifier = modifier
+            .offset { IntOffset(offsetX.roundToInt(), 0) }
+            .rotate(rotation)
+            .clip(RoundedCornerShape(16.dp))
             .border(2.5.dp, when {
                 showDelete -> BrutalRed
                 showKeep -> BrutalGreen
                 else -> BrutalBlack
-            })
-            .background(BrutalBlack).pointerInput(photo.uri) {
+            }, RoundedCornerShape(16.dp))
+            .background(BrutalBlack)
+            .pointerInput(photo.uri) {
                 detectHorizontalDragGestures(
                     onDragEnd = {
                         when {
@@ -73,18 +79,18 @@ fun PhotoSwipeCard (
                 )
             }
     ) {
-        // In a real app, load the photo thumbnail here
+        // Image with Fit scale to show entire photo without cropping
         AsyncImage(
             model = photo.uri,
             contentDescription = photo.displayName,
-            contentScale = ContentScale.Crop,
+            contentScale = ContentScale.Fit,
             modifier = Modifier.fillMaxSize()
         )
 
         //Delete Hint Overlay i.e. on top left
         if(showDelete) {
             Box(
-                modifier = Modifier.align(Alignment.TopStart).padding(12.dp).background(BrutalRed)
+                modifier = Modifier.align(Alignment.TopStart).padding(20.dp).background(BrutalRed)
                     .border(2.dp, Color.White).padding(horizontal = 10.dp, vertical = 5.dp)
             ) {
                 Text("DELETE", color = Color.White,
@@ -96,7 +102,7 @@ fun PhotoSwipeCard (
         if (showKeep) {
             Box(
                 modifier = Modifier.align(Alignment.TopEnd)
-                    .padding(12.dp)
+                    .padding(20.dp)
                     .background(BrutalGreen)
                     .border(2.dp, BrutalBlack)
                     .padding(horizontal = 10.dp, vertical = 5.dp)
@@ -115,7 +121,7 @@ fun PhotoSwipeCard (
         ) {
             Text(photo.displayName.take(22), color = BrutalYellow,
                 style = MaterialTheme.typography.labelSmall)
-            Text("% .1f MB".format(photo.sizeBytes / 1_048_576f),
+            Text(formatFileSize(photo.sizeBytes),
                 color = BrutalYellow, style = MaterialTheme.typography.labelSmall)
         }
     }
