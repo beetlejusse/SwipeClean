@@ -16,7 +16,7 @@ import javax.inject.Singleton
 class MediaStoreRepository @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
-    // things we want from mediastore
+    // things we want from MediaStore
     private val projection = arrayOf (
         MediaStore.Images.Media._ID,
         MediaStore.Images.Media.DISPLAY_NAME,
@@ -30,12 +30,28 @@ class MediaStoreRepository @Inject constructor(
     //fetches/emits a full list of photos, runs on IO dispatcher, never on main thread because doing so will greeze ui
     fun loadPhotos(): Flow<List<Photo>> = flow {
         val photos = mutableListOf<Photo>()
+        
+        // Use MediaStore.Files to access more images including app-specific folders
+        // This works with MANAGE_MEDIA permission on Android 12+
+        val uri = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            MediaStore.Files.getContentUri("external")
+        } else {
+            MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+        }
+        
+        // Add WHERE clause to filter only images (not videos or other files)
+        val selection = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            "${MediaStore.Files.FileColumns.MEDIA_TYPE} = ${MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE}"
+        } else {
+            null
+        }
+        
         context.contentResolver.query(
-            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+            uri,
             projection,
-            null,   //No WHERE clause - we want all photos
+            selection,   // Filter for images only when using Files API
             null,
-            "${MediaStore.Images.Media.DATE_TAKEN} DESC"
+            "${MediaStore.Images.Media.DATE_TAKEN} DESC, ${MediaStore.Images.Media.DATE_MODIFIED} DESC, ${MediaStore.Images.Media.DATE_ADDED} DESC"
         ) ?.use { cursor ->
             val idCol = cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID)
             val nameCol = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DISPLAY_NAME)
@@ -69,10 +85,23 @@ class MediaStoreRepository @Inject constructor(
     suspend fun getTotalStats(): Pair<Int, Long> {
         var count = 0; var totalBytes = 0L
 
+        // Use same URI logic as loadPhotos for consistency
+        val uri = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            MediaStore.Files.getContentUri("external")
+        } else {
+            MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+        }
+        
+        val selection = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            "${MediaStore.Files.FileColumns.MEDIA_TYPE} = ${MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE}"
+        } else {
+            null
+        }
+
         context.contentResolver.query (
-            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+            uri,
             arrayOf(MediaStore.Images.Media._ID, MediaStore.Images.Media.SIZE),
-            null, null, null
+            selection, null, null
         ) ?. use { cursor ->
             count = cursor.count
             while(cursor.moveToNext()) {
