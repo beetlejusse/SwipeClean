@@ -4,8 +4,8 @@ package com.app.swipeclean.ui.navigation
 sealed class Screen(val route: String) {
     object Permission : Screen("permission") // First launch only
     object Home : Screen("home")
-    object Swipe : Screen("swipe?goal={goal}") {
-        fun createRoute(goal: Int = 0) = "swipe?goal=$goal"
+    object Swipe : Screen("swipe/{goal}") {
+        fun createRoute(goal: Int = 0) = "swipe/$goal"
     }
     object Trash : Screen("trash")
     object Stats : Screen("stats")
