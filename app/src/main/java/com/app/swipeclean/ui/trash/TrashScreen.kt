@@ -45,8 +45,11 @@ fun TrashScreen(
 
     val state by vm.state.collectAsStateWithLifecycle()
     Column (
-        modifier = Modifier.background(BrutalCream).padding(top = 52.dp, start = 16.dp, bottom = 40.dp, end = 16.dp).fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        modifier = Modifier
+            .fillMaxSize()
+            .background(BrutalCream)
+            .padding(horizontal = 16.dp)
+            .padding(top = 52.dp, bottom = 52.dp),
     ) {
 
         //Header row
