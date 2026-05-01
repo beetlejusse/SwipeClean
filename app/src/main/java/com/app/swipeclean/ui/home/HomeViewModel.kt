@@ -7,18 +7,17 @@ import com.app.swipeclean.data.repository.TrashRepository
 import com.app.swipeclean.domain.StatsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class HomeUiState(
     val totalPhotos: Int = 0,
-    val totalGalleryMb: Float = 0f,
+    val totalGalleryBytes: Long = 0L,
     val trashCount: Int = 0,
-    val trashMb: Float = 0f,
+    val trashBytes: Long = 0L,
     val streak: Int = 0,
     val totalDeleted: Int = 0,
-    val totalFreedMb: Float = 0f,
+    val totalFreedBytes: Long = 0L,
     val isLoading: Boolean = true,
 )
 
@@ -29,26 +28,46 @@ class HomeViewModel @Inject constructor(
     private val prefsRepo: PreferenceRepository
 ): ViewModel() {
 
+    private val _photoStats = MutableStateFlow<Pair<Int, Long>>(Pair(0, 0L))
+
     val uiState: StateFlow<HomeUiState> = combine(
+        _photoStats,
+        statsUseCase.observeStreak(),
         trashRepo.observeTrashCount(),
         trashRepo.observeTrashSizeBytes(),
         statsUseCase.observeTotalDeleted(),
         statsUseCase.observeTotalFreed()
-    ) { trashCount, trashBytes, deleted, freed ->
+    ) { args: Array<Any?> ->
+        val  photoStats = args[0] as Pair<Int, Long>
+        val streak = args[1] as Int
+        val trashCount = args[2] as Int
+        val trashBytes = args[3] as? Long ?: 0L
+        val deleted = args[4] as? Int ?: 0
+        val freed = args[5] as? Long ?: 0L
         HomeUiState(
+            totalPhotos = photoStats.first,
+            totalGalleryBytes = photoStats.second,
+            streak = streak,
             trashCount = trashCount,
-            trashMb = (trashBytes ?: 0L) / 1_048_576f,
-            totalDeleted = deleted ?: 0,
-            totalFreedMb = (freed ?: 0L) / 1_048_576f,
+            trashBytes = trashBytes,
+            totalDeleted = deleted,
+            totalFreedBytes = freed,
             isLoading = false
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), HomeUiState())
 
     init {
-            viewModelScope.launch {
-                val stats = statsUseCase.getStats()
-                // prefsRepo.setTotalPhotos(stats.totalPhotos)
-                // prefsRepo.setTotalGalleryMb(stats.totalGalleryMb)
-            }
+        loadStats()
+    }
+
+    private fun loadStats() {
+        viewModelScope.launch {
+            val stats = statsUseCase.getStats()
+            _photoStats.value = Pair(stats.totalPhotos, stats.totalGalleryBytes)
+        }
+    }
+
+    fun refreshStats() {
+        loadStats()
     }
 }

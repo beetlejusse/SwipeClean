@@ -16,6 +16,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.app.swipeclean.ui.components.*
 import com.app.swipeclean.ui.theme.*
+import com.app.swipeclean.util.formatFileSize
 
 @Composable
 fun HomeScreen(
@@ -25,6 +26,12 @@ fun HomeScreen(
     onOpenStats: () -> Unit,
 ) {
     val state by vm.uiState.collectAsStateWithLifecycle()
+    
+    // Refresh stats when screen becomes visible
+    LaunchedEffect(Unit) {
+        vm.refreshStats()
+    }
+    
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -42,13 +49,13 @@ fun HomeScreen(
         // Stats row
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             BrutalStatCard(
-                label = "TO REVIEW",
+                label = "PHOTOS",
                 value = state.totalPhotos.toString(),
                 modifier = Modifier.weight(1f)
             )
             BrutalStatCard(
-                label = "GALLERY SIZE",
-                value = "%.1f GB".format(state.totalGalleryMb / 1024f),
+                label = "TOTAL SIZE",
+                value = formatFileSize(state.totalGalleryBytes),
                 background = BrutalYellow,
                 modifier = Modifier.weight(1f)
             )
