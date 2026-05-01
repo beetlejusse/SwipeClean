@@ -13,9 +13,8 @@ import androidx.compose.ui.unit.dp
 import com.app.swipeclean.ui.components.BrutalButton
 import com.app.swipeclean.ui.theme.*
 import com.google.accompanist.permissions.*
-import com.google.androidbrowserhelper.trusted.PermissionStatus
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalPermissionsApi::class)
 @Composable
 fun PermissionScreen(onPermissionGranted: () -> Unit) {
     // Choose the right permission based on Android version
@@ -23,6 +22,7 @@ fun PermissionScreen(onPermissionGranted: () -> Unit) {
         Manifest.permission.READ_MEDIA_IMAGES
     else
         Manifest.permission.READ_EXTERNAL_STORAGE
+    
     val permState = rememberPermissionState(permission) { granted ->
         if(granted) onPermissionGranted()
     }
@@ -41,12 +41,18 @@ fun PermissionScreen(onPermissionGranted: () -> Unit) {
         HorizontalDivider(thickness = 2.dp, color = BrutalBlack)
         Spacer(Modifier.height(16.dp))
         Text(
-            "To start swiping, we need access to your photos. Don't worry, we only read and delete photos you choose to swipe away. No data ever leaves your device.",
+            "To start swiping, we need access to your photos. This includes images from your camera, downloads, and app folders (WhatsApp, social media, etc.).",
             style = MaterialTheme.typography.bodyMedium
+        )
+        Spacer(Modifier.height(12.dp))
+        Text(
+            "Don't worry — we only read and delete photos you choose. No data ever leaves your device.",
+            style = MaterialTheme.typography.bodySmall,
+            color = BrutalBlack.copy(alpha = 0.7f)
         )
         Spacer(Modifier.height(24.dp))
         BrutalButton(
-            text = "Grant Permission ->",
+            text = "Grant Permission →",
             onClick = { permState.launchPermissionRequest() },
             background = BrutalYellow,
             modifier = Modifier.fillMaxWidth()
