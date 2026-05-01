@@ -18,6 +18,7 @@ import com.app.swipeclean.ui.components.BrutalCard
 import com.app.swipeclean.ui.components.BrutalStatCard
 import com.app.swipeclean.ui.components.StreakBanner
 import com.app.swipeclean.ui.theme.*
+import com.app.swipeclean.util.formatFileSize
 
 @Composable
 fun StatScreen(onBack: () -> Unit, vm: StatsViewModel = hiltViewModel()) {
@@ -40,7 +41,7 @@ fun StatScreen(onBack: () -> Unit, vm: StatsViewModel = hiltViewModel()) {
                     modifier = Modifier.weight(1f)
                 )
                 BrutalStatCard(
-                    "%.1f GB".format(state.totalFreedMb / 1024f),
+                    formatFileSize(state.totalFreedBytes),
                     label = "STORAGE FREED",
                     background = BrutalYellow,
                     modifier = Modifier.weight(1f)
@@ -62,8 +63,7 @@ fun StatScreen(onBack: () -> Unit, vm: StatsViewModel = hiltViewModel()) {
                 Row(Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween) {
                     Text(session.date, style = MaterialTheme.typography.bodyMedium)
-                    Text("${session.photosDeleted} deleted • "+
-                            "%.1f MB freed".format(session.bytesFreed/1_048_576f),
+                    Text("${session.photosDeleted} deleted • ${formatFileSize(session.bytesFreed)}",
                         style = MaterialTheme.typography.bodyMedium,
                         color = BrutalBlack.copy(alpha = 0.6f))
                 }

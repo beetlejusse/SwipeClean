@@ -12,7 +12,7 @@ import javax.inject.Inject
 
 data class StatsUIState(
     val streak: Int = 0,
-    val totalFreedMb: Float = 0f,
+    val totalFreedBytes: Long = 0L,
     val totalDeleted: Int = 0,
     val session: List<SessionRecord> = emptyList(),
     val dailyFreed: List<DailyFreed> = emptyList()
@@ -24,13 +24,15 @@ class StatsViewModel @Inject constructor(
     private val sessionRepo: SessionRepository
 ): ViewModel() {
     val state: StateFlow<StatsUIState> = combine (
+        statsUseCase.observeStreak(),
         statsUseCase.observeTotalFreed(),
         statsUseCase.observeTotalDeleted(),
         sessionRepo.observeAllSessions(),
         sessionRepo.observeDailyFreed()
-    ) {freed, deleted, sessions, dailyFreed ->
+    ) {streak, freed, deleted, sessions, dailyFreed ->
         StatsUIState(
-            totalFreedMb = (freed ?: 0L) / 1_048_576f,
+            streak = streak,
+            totalFreedBytes = freed ?: 0L,
             totalDeleted = deleted ?: 0,
             session = sessions,
             dailyFreed = dailyFreed
