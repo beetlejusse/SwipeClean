@@ -31,4 +31,5 @@ class StatsUseCase @Inject constructor(
 
     fun observeTotalFreed(): Flow<Long?> = sessionRepo.observeTotalFreed()
     fun observeTotalDeleted(): Flow<Int?> = sessionRepo.observeTotalDeleted()
+    fun observeStreak(): Flow<Int> = sessionRepo.observeStreak()
 }
